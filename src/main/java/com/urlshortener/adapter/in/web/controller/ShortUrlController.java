@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -64,7 +65,7 @@ public class ShortUrlController {
     @Operation(summary = "List all URLs for the authenticated user (paginated)")
     public PageResponse<ShortUrlResponse> list(
             @AuthenticationPrincipal UserDetails principal,
-            @PageableDefault(size = 10, sort = "createdAt") Pageable pageable
+            @ParameterObject @PageableDefault(size = 10, sort = "createdAt") Pageable pageable
     ) {
         UUID userId = userLookup.resolveId(principal.getUsername());
         Page<ShortUrl> page = getUserUrlsUseCase.getUserUrls(userId, pageable);
