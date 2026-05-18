@@ -1,0 +1,10 @@
+spring:
+  flyway:
+    enabled: true
+
+app:
+  jwt:
+    # Long test secret — must be Base64-encoded and at least 256 bits for HS256
+    secret: dGVzdFNlY3JldEtleUZvclRlc3RpbmdQdXJwb3Nlc09ubHkxMjM0NTY3ODk=
+    expiration: 86400000
+  base-url: http://localhost:8080
