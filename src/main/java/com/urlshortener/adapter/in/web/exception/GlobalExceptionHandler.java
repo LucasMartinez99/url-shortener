@@ -1,6 +1,7 @@
 package com.urlshortener.adapter.in.web.exception;
 
 import com.urlshortener.domain.exception.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
  * Maps domain exceptions to HTTP status codes.
  * No try/catch in controllers — they stay clean.
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -82,6 +84,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
+        log.error("Unhandled exception: {}", ex.getMessage(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
     }
 
