@@ -1,10 +1,25 @@
+# Build output
 target/
+
+# Compiled files
 *.class
 *.jar
 *.war
 *.ear
+
+# Environment variables — never commit these
 .env
+.env.*
+!.env.example
+
+# IDE
 *.iml
 .idea/
 .vscode/
+
+# OS
 *.DS_Store
+Thumbs.db
+
+# Logs
+*.log
