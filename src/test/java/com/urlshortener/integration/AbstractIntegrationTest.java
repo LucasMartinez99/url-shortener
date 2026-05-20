@@ -6,29 +6,33 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
- * Base class for integration tests.
+ * Base class for integration tests — singleton container pattern.
  *
- * @Testcontainers manages the lifecycle of the PostgreSQL container.
- * The static container is shared across all tests in the suite — starts once, much faster.
- * @DynamicPropertySource overrides spring.datasource.* so Spring Boot connects to the container.
+ * The PostgreSQL container is started ONCE in a static initializer and shared
+ * across all test classes for the entire JVM lifetime. This prevents the
+ * start/stop cycle between test classes that causes HikariCP to lose its
+ * connection pool when running in CI. Testcontainers registers a JVM shutdown
+ * hook to stop the container after all tests complete.
  *
- * GitHub Actions ubuntu-latest runners have Docker available, so this works in CI too.
+ * Because the datasource URL never changes, Spring caches a single
+ * ApplicationContext that is reused by all subclasses — faster and more stable.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
-@Testcontainers
 @ActiveProfiles("test")
 public abstract class AbstractIntegrationTest {
 
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
-            .withDatabaseName("testdb")
-            .withUsername("test")
-            .withPassword("test");
+    static final PostgreSQLContainer<?> postgres =
+            new PostgreSQLContainer<>("postgres:16-alpine")
+                    .withDatabaseName("testdb")
+                    .withUsername("test")
+                    .withPassword("test");
+
+    static {
+        postgres.start();
+    }
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
