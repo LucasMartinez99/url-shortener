@@ -3,6 +3,8 @@ spring:
     enabled: true
 
 app:
+  rate-limit:
+    enabled: false   # disable in-memory rate limiting so test requests are not throttled
   jwt:
     # Long test secret — must be Base64-encoded and at least 256 bits for HS256
     secret: dGVzdFNlY3JldEtleUZvclRlc3RpbmdQdXJwb3Nlc09ubHkxMjM0NTY3ODk=

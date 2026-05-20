@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -19,9 +20,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
+    @Value("${app.rate-limit.enabled:true}")
+    private boolean enabled;
+
     // Per-IP buckets for each limit tier
     private final ConcurrentHashMap<String, Bucket> authBuckets     = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Bucket> redirectBuckets = new ConcurrentHashMap<>();
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return !enabled;
+    }
 
     @Override
     protected void doFilterInternal(
