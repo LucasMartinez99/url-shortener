@@ -25,7 +25,7 @@ class AuthControllerTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("POST /api/v1/auth/register — should create user and return token")
     void register_validRequest_shouldReturnToken() throws Exception {
-        RegisterRequest request = new RegisterRequest("newuser@example.com", "password123");
+        RegisterRequest request = new RegisterRequest("newuser@example.com", "Password@123");
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -38,7 +38,7 @@ class AuthControllerTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("POST /api/v1/auth/register — should return 409 when email is already taken")
     void register_duplicateEmail_shouldReturn409() throws Exception {
-        RegisterRequest request = new RegisterRequest("duplicate@example.com", "password123");
+        RegisterRequest request = new RegisterRequest("duplicate@example.com", "Password@123");
 
         mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -53,7 +53,7 @@ class AuthControllerTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("POST /api/v1/auth/register — should return 400 for invalid email")
     void register_invalidEmail_shouldReturn400() throws Exception {
-        RegisterRequest request = new RegisterRequest("not-an-email", "password123");
+        RegisterRequest request = new RegisterRequest("not-an-email", "Password@123");
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -64,12 +64,12 @@ class AuthControllerTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("POST /api/v1/auth/login — should return token for valid credentials")
     void login_validCredentials_shouldReturnToken() throws Exception {
-        RegisterRequest register = new RegisterRequest("login@example.com", "password123");
+        RegisterRequest register = new RegisterRequest("login@example.com", "Password@123");
         mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(register)));
 
-        LoginRequest login = new LoginRequest("login@example.com", "password123");
+        LoginRequest login = new LoginRequest("login@example.com", "Password@123");
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(login)))
@@ -80,12 +80,12 @@ class AuthControllerTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("POST /api/v1/auth/login — should return 401 for wrong password")
     void login_wrongPassword_shouldReturn401() throws Exception {
-        RegisterRequest register = new RegisterRequest("wrongpass@example.com", "password123");
+        RegisterRequest register = new RegisterRequest("wrongpass@example.com", "Password@123");
         mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(register)));
 
-        LoginRequest login = new LoginRequest("wrongpass@example.com", "wrongPassword");
+        LoginRequest login = new LoginRequest("wrongpass@example.com", "WrongPassword@123");
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(login)))

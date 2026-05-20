@@ -24,7 +24,7 @@ class ShortUrlControllerTest extends AbstractIntegrationTest {
 
     @BeforeEach
     void registerAndLogin() throws Exception {
-        RegisterRequest register = new RegisterRequest("urltest@example.com", "password123");
+        RegisterRequest register = new RegisterRequest("urltest@example.com", "Password@123");
         MvcResult result = mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(register)))
@@ -37,7 +37,7 @@ class ShortUrlControllerTest extends AbstractIntegrationTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(
                                     new com.urlshortener.adapter.in.web.dto.request.LoginRequest(
-                                            "urltest@example.com", "password123"))))
+                                            "urltest@example.com", "Password@123"))))
                     .andReturn();
             body = result.getResponse().getContentAsString();
         }
