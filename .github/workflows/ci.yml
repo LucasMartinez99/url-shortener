@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # Testcontainers starts its own Docker-in-Docker PostgreSQL container,
+    # so we don't need a separate service here.
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build and run tests
+        run: mvn verify --no-transfer-progress
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-test-secret-must-be-at-least-256-bits-long-for-hs256-algorithm' }}
+          SPRING_PROFILES_ACTIVE: test
+
+      - name: Upload test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: target/surefire-reports/

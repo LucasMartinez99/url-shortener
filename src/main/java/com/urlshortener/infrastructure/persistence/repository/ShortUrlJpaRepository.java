@@ -20,5 +20,9 @@ public interface ShortUrlJpaRepository extends JpaRepository<ShortUrlEntity, UUI
 
     boolean existsByCustomAlias(String customAlias);
 
+    boolean existsByShortCodeAndIdNot(String shortCode, UUID id);
+
+    boolean existsByCustomAliasAndIdNot(String customAlias, UUID id);
+
     Page<ShortUrlEntity> findByUserIdAndActiveTrue(UUID userId, Pageable pageable);
 }

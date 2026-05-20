@@ -20,5 +20,7 @@ public interface ShortUrlRepositoryPort {
 
     boolean existsByCode(String code);
 
+    boolean existsByCodeExcludingId(String code, UUID excludeId);
+
     void deleteById(UUID id);
 }

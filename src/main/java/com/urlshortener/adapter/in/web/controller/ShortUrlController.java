@@ -1,6 +1,7 @@
 package com.urlshortener.adapter.in.web.controller;
 
 import com.urlshortener.adapter.in.web.dto.request.CreateShortUrlRequest;
+import com.urlshortener.adapter.in.web.dto.request.UpdateShortUrlRequest;
 import com.urlshortener.adapter.in.web.dto.response.PageResponse;
 import com.urlshortener.adapter.in.web.dto.response.ShortUrlResponse;
 import com.urlshortener.adapter.in.web.mapper.ShortUrlWebMapper;
@@ -10,6 +11,8 @@ import com.urlshortener.domain.port.in.CreateShortUrlUseCase.CreateShortUrlComma
 import com.urlshortener.domain.port.in.DeleteShortUrlUseCase;
 import com.urlshortener.domain.port.in.GetUrlAnalyticsUseCase;
 import com.urlshortener.domain.port.in.GetUserUrlsUseCase;
+import com.urlshortener.domain.port.in.UpdateShortUrlUseCase;
+import com.urlshortener.domain.port.in.UpdateShortUrlUseCase.UpdateShortUrlCommand;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +38,7 @@ import java.util.UUID;
 public class ShortUrlController {
 
     private final CreateShortUrlUseCase  createShortUrlUseCase;
+    private final UpdateShortUrlUseCase  updateShortUrlUseCase;
     private final DeleteShortUrlUseCase  deleteShortUrlUseCase;
     private final GetUserUrlsUseCase     getUserUrlsUseCase;
     private final GetUrlAnalyticsUseCase getUrlAnalyticsUseCase;
@@ -70,6 +74,27 @@ public class ShortUrlController {
         UUID userId = userLookup.resolveId(principal.getUsername());
         Page<ShortUrl> page = getUserUrlsUseCase.getUserUrls(userId, pageable);
         return PageResponse.from(page.map(url -> mapper.toResponse(url, baseUrl)));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Update a URL (partial update)")
+    public ShortUrlResponse update(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateShortUrlRequest request,
+            @AuthenticationPrincipal UserDetails principal
+    ) {
+        UUID userId = userLookup.resolveId(principal.getUsername());
+        ShortUrl shortUrl = updateShortUrlUseCase.update(new UpdateShortUrlCommand(
+                id,
+                userId,
+                request.originalUrl(),
+                request.customAlias(),
+                request.clearAlias(),
+                request.expiresAt(),
+                request.clearExpiry(),
+                request.active()
+        ));
+        return mapper.toResponse(shortUrl, baseUrl);
     }
 
     @DeleteMapping("/{id}")

@@ -45,6 +45,12 @@ public class ShortUrlRepositoryAdapter implements ShortUrlRepositoryPort {
     }
 
     @Override
+    public boolean existsByCodeExcludingId(String code, UUID excludeId) {
+        return jpaRepository.existsByShortCodeAndIdNot(code, excludeId)
+                || jpaRepository.existsByCustomAliasAndIdNot(code, excludeId);
+    }
+
+    @Override
     public void deleteById(UUID id) {
         jpaRepository.deleteById(id);
     }

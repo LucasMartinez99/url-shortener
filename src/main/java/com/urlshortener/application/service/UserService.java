@@ -50,7 +50,7 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
     @Transactional(readOnly = true)
     public User authenticate(AuthenticateUserCommand command) {
         User user = userRepository.findByEmail(command.email())
-                .orElseThrow(() -> new UserNotFoundException(command.email()));
+                .orElseThrow(InvalidCredentialsException::new);
 
         if (!passwordEncoder.matches(command.password(), user.getPassword())) {
             throw new InvalidCredentialsException();
