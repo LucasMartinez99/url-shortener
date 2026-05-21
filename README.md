@@ -85,14 +85,33 @@ Full interactive documentation available at `/swagger-ui.html`.
 
 ```bash
 # 1. Clone the repo
-git clone git@github.com:LucasMartinez99/url-shortener.git
+git clone https://github.com/LucasMartinez99/url-shortener.git
 cd url-shortener
 
 # 2. Set up environment variables
 cp .env.example .env
-# Edit .env and fill in your values (DB credentials, JWT secret, etc.)
-# Generate a JWT secret with: openssl rand -base64 32
+```
 
+Open `.env` and fill it in. For a local Docker Compose setup the values below work as-is — just replace the JWT secret:
+
+```env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=urlshortener
+
+DB_HOST=db          # must be "db" — the Docker Compose service name, not localhost
+DB_PORT=5432
+DB_NAME=urlshortener
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+
+JWT_SECRET=<run: openssl rand -base64 32>
+JWT_EXPIRATION=86400000
+
+APP_BASE_URL=http://localhost:8080
+```
+
+```bash
 # 3. Start the full stack (app + PostgreSQL)
 docker compose up -d
 
@@ -125,10 +144,10 @@ Integration tests spin up a real PostgreSQL container via Testcontainers — no 
 ## Quick API Demo
 
 ```bash
-# Register
+# Register (password must have uppercase, lowercase, digit, and special character)
 curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email":"you@example.com","password":"password123"}'
+  -d '{"email":"you@example.com","password":"Test@1234"}'
 
 # Create a short URL
 curl -X POST http://localhost:8080/api/v1/urls \
