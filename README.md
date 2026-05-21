@@ -90,28 +90,9 @@ cd url-shortener
 
 # 2. Set up environment variables
 cp .env.example .env
-```
+# Fill in your credentials. Important: set DB_HOST=db (the Docker service name, not localhost)
+# Generate a JWT secret with: openssl rand -base64 32
 
-Open `.env` and fill it in. For a local Docker Compose setup the values below work as-is — just replace the JWT secret:
-
-```env
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=urlshortener
-
-DB_HOST=db          # must be "db" — the Docker Compose service name, not localhost
-DB_PORT=5432
-DB_NAME=urlshortener
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-
-JWT_SECRET=<run: openssl rand -base64 32>
-JWT_EXPIRATION=86400000
-
-APP_BASE_URL=http://localhost:8080
-```
-
-```bash
 # 3. Start the full stack (app + PostgreSQL)
 docker compose up -d
 
