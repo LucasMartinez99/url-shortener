@@ -12,12 +12,13 @@ Demonstrates clean architecture, professional Java engineering, and modern DevOp
 | Architecture | Hexagonal (Ports & Adapters) |
 | Database | PostgreSQL 16 + Flyway migrations |
 | Security | Spring Security + JWT (JJWT 0.12) |
+| Rate Limiting | Bucket4j (token-bucket, per-IP, in-memory) |
 | Mapping | MapStruct (compile-time, zero reflection) |
 | Testing | JUnit 5 + Mockito + Testcontainers |
 | API Docs | OpenAPI 3 / Swagger UI |
 | Build | Maven |
-| Container | Docker + Docker Compose |
-| CI | GitHub Actions |
+| Container | Docker + Docker Compose (multi-stage build) |
+| CI/CD | GitHub Actions (CI + auto-deploy to VPS) |
 
 ## Architecture
 
@@ -38,8 +39,8 @@ src/main/java/com/urlshortener/
 │
 ├── infrastructure/
 │   ├── persistence/            # JPA entities, Spring Data repos, adapters, MapStruct mappers
-│   ├── security/               # JWT service, filter, UserDetailsService, BCrypt adapter
-│   ├── config/                 # Spring beans (ApplicationConfig, OpenApiConfig)
+│   ├── security/               # JWT service, filter, UserDetailsService, BCrypt adapter, RateLimitFilter
+│   ├── config/                 # Spring beans (ApplicationConfig, OpenApiConfig, CorsConfig)
 │   └── adapter/                # ShortCodeGenerator (Base62)
 │
 └── adapter/
@@ -57,9 +58,11 @@ src/main/java/com/urlshortener/
 - Shorten any URL with an auto-generated 7-character Base62 code
 - Optional custom aliases (e.g. `/google` instead of `/xK3mN9p`)
 - Optional expiration dates
+- Partial updates: change the original URL, alias, expiry, or toggle a link active/inactive
 - Click tracking and analytics per link
 - Paginated URL listing
 - Access log per redirect (IP, User-Agent, timestamp)
+- Per-IP rate limiting on auth and redirect endpoints (Bucket4j)
 
 ## API Endpoints
 
@@ -69,6 +72,7 @@ src/main/java/com/urlshortener/
 | POST | `/api/v1/auth/login` | No | Login, get JWT token |
 | POST | `/api/v1/urls` | Yes | Create a short URL |
 | GET | `/api/v1/urls` | Yes | List your URLs (paginated) |
+| PATCH | `/api/v1/urls/{id}` | Yes | Partial update (alias, expiry, active toggle) |
 | GET | `/api/v1/urls/{id}/analytics` | Yes | Get click analytics |
 | DELETE | `/api/v1/urls/{id}` | Yes | Delete a URL |
 | GET | `/{code}` | No | Redirect to original URL |
@@ -84,11 +88,16 @@ Full interactive documentation available at `/swagger-ui.html`.
 git clone git@github.com:LucasMartinez99/url-shortener.git
 cd url-shortener
 
-# 2. Start the full stack (app + PostgreSQL)
+# 2. Set up environment variables
+cp .env.example .env
+# Edit .env and fill in your values (DB credentials, JWT secret, etc.)
+# Generate a JWT secret with: openssl rand -base64 32
+
+# 3. Start the full stack (app + PostgreSQL)
 docker compose up -d
 
-# 3. API is live at http://localhost:8080
-# 4. Swagger UI at http://localhost:8080/swagger-ui.html
+# 4. API is live at http://localhost:8080
+# 5. Swagger UI at http://localhost:8080/swagger-ui.html
 ```
 
 To run just the database and use Maven for hot-reload during development:
@@ -129,14 +138,27 @@ curl -X POST http://localhost:8080/api/v1/urls \
 
 # Redirect
 curl -L http://localhost:8080/my-project
+
+# Partial update — deactivate a link
+curl -X PATCH http://localhost:8080/api/v1/urls/<id> \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"active":false}'
 ```
 
 ## CI/CD
 
-GitHub Actions runs on every push to `main` and `dev`:
-1. Compile
-2. Run all tests (Testcontainers works on `ubuntu-latest`)
-3. Package JAR and upload as artifact
+Two GitHub Actions workflows run automatically:
+
+**CI** — triggers on every push and pull request to `main`:
+1. Set up Java 21 (Temurin) with Maven cache
+2. Run full test suite (`mvn verify`) including Testcontainers integration tests
+3. Upload Surefire test reports as artifacts on failure
+
+**Deploy** — triggers on push to `main` after CI passes:
+1. SSH into the VPS
+2. Pull latest code
+3. Rebuild and restart only the app container (`docker compose up -d --build --no-deps app`) — zero database downtime
 
 ## Key Engineering Decisions
 
@@ -149,3 +171,7 @@ GitHub Actions runs on every push to `main` and `dev`:
 **Testcontainers over H2** — Integration tests hit a real PostgreSQL container. No dialect mismatches, no hidden incompatibilities.
 
 **MapStruct over manual mapping** — Zero-reflection compile-time mappers between JPA entities and domain objects.
+
+**Bucket4j rate limiting** — Per-IP token buckets protect the two highest-risk endpoints without Redis or external state: auth endpoints (10 req/min) and the redirect endpoint (60 req/min). Fully togglable via `app.rate-limit.enabled`.
+
+**Multi-stage Docker build** — Stage 1 uses the full Maven + JDK image to compile and package. Stage 2 uses a JRE-only Alpine image (~100 MB smaller) and runs as a non-root user for container security.
