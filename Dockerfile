@@ -18,8 +18,8 @@ FROM eclipse-temurin:21-jre-alpine AS runtime
 
 WORKDIR /app
 
-# Non-root user: best practice for container security
-RUN addgroup -S spring && adduser -S spring -G spring
+# Security patches for the base OS (the base image lags behind) + non-root user
+RUN apk upgrade --no-cache && addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
 COPY --from=builder /app/target/*.jar app.jar
